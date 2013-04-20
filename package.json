@@ -1,0 +1,17 @@
+{
+  "name": "jobberTrack",
+  "version": "0.0.1",
+  "description": "A simple way to create and see the status of jobs",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm test"
+  },
+  "repository": "",
+  "keywords": [
+    "jobs",
+    "node",
+    "redis"
+  ],
+  "author": "lahabana (Charly Molter)",
+  "license": "MIT"
+}
