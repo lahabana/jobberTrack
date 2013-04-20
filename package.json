@@ -1,5 +1,5 @@
 {
-  "name": "jobberTrack",
+  "name": "jobber-track",
   "version": "0.0.1",
   "description": "A simple way to create and see the status of jobs",
   "main": "index.js",

@@ -6,6 +6,11 @@ jobberTrack - A simple way to create and see the status of jobs with redis
 
 It uses redis to store objects with their state and store extra information when it is finished.
 
+## Installation
+
+    npm install jobber-track
+    npm test
+
 ## Example
 
 ```js
