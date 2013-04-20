@@ -10,7 +10,7 @@ It uses redis to store objects with their state and store extra information when
 
 ```js
     var client = redis.createClient("","","");
-    var track = new JobberTrack(client);
+    var track = new JobberTrack.Handler(client);
     // create a new job
     track.create(12, function(err, job) {
         // Start the job
@@ -24,7 +24,7 @@ It uses redis to store objects with their state and store extra information when
 
     // get the state of a job
     var client = redis.createClient("","","");
-    var track = new JobberTrack(client);
+    var track = new JobberTrack.Handler(client);
     // create a new job
     track.get("job id", function(err, job) {
         if (job.state == "finished") {
