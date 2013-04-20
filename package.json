@@ -4,14 +4,24 @@
   "description": "A simple way to create and see the status of jobs",
   "main": "index.js",
   "scripts": {
-    "test": "mocha --ui tdd test/*"
+    "test": "mocha test/* --timeout 3000"
   },
-  "repository": "",
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/Tim-Smart/node-redis.git"
+  },
   "keywords": [
     "jobs",
     "node",
     "redis"
   ],
+  "dependencies": {
+    "redis": ">=0.8.3"
+  },
+  "devDependencies": {
+    "node-redis": ">=0.1.5",
+    "mocha": ">=1.9.0"
+  },
   "author": "lahabana (Charly Molter)",
   "license": "MIT"
 }
