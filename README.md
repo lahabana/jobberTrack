@@ -1,5 +1,9 @@
 jobberTrack - A simple way to create and see the status of jobs with redis
 ===========================
+
+[![Build Status](https://travis-ci.org/lahabana/jobberTrack.png)](https://travis-ci.org/lahabana/jobberTrack)
+
+
 It uses redis to store objects with their state and store extra information when it is finished.
 
 ## Example
