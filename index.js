@@ -62,7 +62,14 @@ JobberTrack.prototype.create = function(timeout, callback) {
  * Returns the resource identified by the key "id"
  */
 JobberTrack.prototype.get = function(id, callback) {
-  this.client.get(id, callback);
+  var that = this;
+  this.client.get(id, function(err, reply) {
+    if (err) {
+      callback(err);
+    }
+    that.resourceFactory.load(that.client, id, reply);
+    callback(false, reply);
+  });
 }
 
 /**
@@ -83,6 +90,16 @@ Resource.prototype.getValue = function() {
     res.data = this.data;
   }
   return res;
+};
+
+/**
+ * Set the content from the result of redis query
+ */
+Resource.prototype.setValue = function(reply) {
+  this.state = reply.state;
+  if (reply.data) {
+    this.data = reply.data;
+  }
 };
 
 /**
@@ -136,5 +153,10 @@ var TimestampResourceFactory = function() {
 TimestampResourceFactory.prototype.create = function(client) {
   return new Resource(client, new Date().getTime());
 };
+
+TimestampResourceFactory.prototype.load = function(client, id, reply) {
+  res = new Resource(client, id);
+  res.setValue(reply);
+}
 
 module.exports = {Handler: JobberTrack, Resource: Resource};

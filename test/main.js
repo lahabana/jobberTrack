@@ -125,13 +125,15 @@ describe("Testing get on a resource", function() {
     var track = new JobberTrack.Handler(client);
 
     track.create(12, function(err, elt) {
-      setTimeout(function() {
-        track.get(elt.id, function(err, reply) {
-            assert.ok(!err, err);
-            assert.strictEqual(elt.state, "waiting");
-            done();
-        });
-      }, 1);
+      elt.start(function(err, reply) {
+        setTimeout(function() {
+          track.get(elt.id, function(err, res) {
+              assert.ok(!err, err);
+              assert.strictEqual(res.state, "running");
+              done();
+          });
+        }, 1);
+      });
     });
   });
 });

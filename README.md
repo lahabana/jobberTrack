@@ -52,6 +52,8 @@ It uses redis to store objects with their state and store extra information when
 
 `create(timeout, callback)` Creates a new job with the status 'waiting' and call callback(err, resource) where resource is a JobberTrack.Resource . timeout can be omited if it has been set previously for the JobberTrack using `setDefaultTimeout()`
 
+`get(id, callback)` Look for the object with the key 'id' and calls callback(err, resource) where resource is the resource loaded from the redis store.
+
 ### JobberTrack.Resource
 
 A resource can have 4 states: waiting, running, failed, finished. running is only accessible from waiting and failed or finished is only accessible from running.
@@ -66,10 +68,14 @@ A resource can have 4 states: waiting, running, failed, finished. running is onl
 
 `getValue()` returns what is stored in the redis (it is not automatically updated when it is changed on the redis store).
 
+`setValue(reply)` sets the content of the Resource according to what was returned by the redis store
+
 ### ResourceFactory
 Create your own resource factory if you want to change the way ids are created.
 
 `create(client)` Creates an new JobberTrack.Resource that will use the client `client`.
+
+`load(client, id, reply)` Loads the object from an already existing key-value in the redis store
 
 
 ## MIT License
