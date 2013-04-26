@@ -4,7 +4,7 @@ jobberTrack - A simple way to create and see the status of jobs with redis
 [![Build Status](https://travis-ci.org/lahabana/jobberTrack.png)](https://travis-ci.org/lahabana/jobberTrack)
 
 
-It uses redis to store objects with their state and store extra information when it is finished.
+It uses redis to store objects with their state and store extra information at creation or when it is finished.
 
 ## Installation
 
@@ -17,7 +17,7 @@ It uses redis to store objects with their state and store extra information when
     var client = redis.createClient("","","");
     var track = new JobberTrack.Handler(client);
     // create a new job
-    track.create(12, function(err, job) {
+    track.create(12, {"some": "data if you want"} ,function(err, job) {
         // Start the job
         job.start(function(err, reply) {
             // what you need to do
@@ -34,6 +34,7 @@ It uses redis to store objects with their state and store extra information when
     track.get("job id", function(err, job) {
         if (job.state == "finished") {
             console.log(job.data);
+            console.log(job.result);
         }
     });
 ```
@@ -50,7 +51,7 @@ It uses redis to store objects with their state and store extra information when
 
 `setDefaultTimeout(timeout)` set the default timeout of all the jobs created by this JobberTrack to `timeout`
 
-`create(timeout, callback)` Creates a new job with the status 'waiting' and call callback(err, resource) where resource is a JobberTrack.Resource . timeout can be omited if it has been set previously for the JobberTrack using `setDefaultTimeout()`
+`create(timeout, data, callback)` Creates a new job with the status 'waiting' and call callback(err, resource) where resource is a JobberTrack.Resource . timeout can be ommited if it has been set previously for the JobberTrack using `setDefaultTimeout()`. `data` is whatever you want to store in the redis store.
 
 `get(id, callback)` Look for the object with the key 'id' and calls callback(err, resource) where resource is the resource loaded from the redis store.
 
@@ -58,7 +59,7 @@ It uses redis to store objects with their state and store extra information when
 
 A resource can have 4 states: waiting, running, failed, finished. running is only accessible from waiting and failed or finished is only accessible from running.
 
-`new JobberTrack.Resource(client, id)` this should only be called through a factory and by `JobberTrack.create()`. Creates a new Resource and will use the redis client `client` and the key `id`.
+`new JobberTrack.Resource(client, id, data)` this should only be called through a factory and by `JobberTrack.create()`. Creates a new Resource and will use the redis client `client` and the key `id`. `data` is some extra data you would like to store for later use.
 
 `start(callback)` set the status of the job to `running`
 
@@ -68,12 +69,16 @@ A resource can have 4 states: waiting, running, failed, finished. running is onl
 
 `getValue()` returns what is stored in the redis (it is not automatically updated when it is changed on the redis store).
 
-`setValue(reply)` sets the content of the Resource according to what was returned by the redis store
+`setValue(reply)` sets the content of the Resource according to what was returned by the redis store.
+
+`data` the data that has been stored upon creation. Default: {}
+
+`result` the data that has been stored when finishing. Default: {}
 
 ### ResourceFactory
 Create your own resource factory if you want to change the way ids are created.
 
-`create(client)` Creates an new JobberTrack.Resource that will use the client `client`.
+`create(client, data)` Creates an new JobberTrack.Resource that will use the client `client` and have as data `data`.
 
 `load(client, id, reply)` Loads the object from an already existing key-value in the redis store
 

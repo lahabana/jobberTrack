@@ -33,18 +33,36 @@ JobberTrack.prototype.setDefaultTimeout = function(time) {
  * Create a new resource that will last "timeout"
  * (if timeout is not defined is uses the general default timeout if it was set)
  */
-JobberTrack.prototype.create = function(timeout, callback) {
+JobberTrack.prototype.create = function(timeout, data, callback) {
   var that = this;
-  if (typeof(timeout) == "function" && !callback) {
+  if (typeof(timeout) === "number" && data) {
+    if (typeof(data) === "function" && !callback) {
+      callback = data;
+      data = {};
+    } else if (typeof(callback) !== "function") {
+      throw new Error("Invalid arguments");
+    }
+  } else if (typeof(timeout) === "function" && !callback && !data) {
+    data = {};
     callback = timeout;
     if (this.timeout) {
       timeout = this.timeout;
     } else {
-      callback("timeout not defined");
+      throw new Error("Timeout not defined");
+    }
+  } else if (typeof(data) === "function" && !callback) {
+    callback = data;
+    data = timeout;
+    if (this.timeout) {
+      timeout = this.timeout;
+    } else {
+      throw new Error("Timeout not defined");
       return;
     }
+  } else {
+    throw new Error("Invalid arguments");
   }
-  var res = that.resourceFactory.create(that.client);
+  var res = that.resourceFactory.create(that.client, data);
   that.client.set(res.id, res.getValue(), function(err, reply) {
     if (err) {
       callback("couldn't set the object");
@@ -67,16 +85,18 @@ JobberTrack.prototype.get = function(id, callback) {
     if (err) {
       callback(err);
     }
-    that.resourceFactory.load(that.client, id, reply);
-    callback(false, reply);
+    var res = that.resourceFactory.load(that.client, id, reply);
+    callback(false, res);
   });
 }
 
 /**
  * Create a new Resource with the id "id"
  */
-var Resource = function(client, id) {
+var Resource = function(client, id, data) {
   this.client = client;
+  this.data = data || {};
+  this.result = {};
   this.id = id;
   this.state = "waiting";
 };
@@ -86,9 +106,8 @@ var Resource = function(client, id) {
  */
 Resource.prototype.getValue = function() {
   var res = {state: this.state};
-  if (this.data) {
-    res.data = this.data;
-  }
+  res.data = this.data;
+  res.result = this.result;
   return res;
 };
 
@@ -97,9 +116,8 @@ Resource.prototype.getValue = function() {
  */
 Resource.prototype.setValue = function(reply) {
   this.state = reply.state;
-  if (reply.data) {
-    this.data = reply.data;
-  }
+  this.data = reply.data || {};
+  this.result = reply.result || {};
 };
 
 /**
@@ -132,7 +150,7 @@ Resource.prototype.finish = function(data, callback) {
     callback("Can't fail a resource not running");
     return;
   }
-  this.data = data;
+  this.result = data;
   this._changeState("finished", callback);
 }
 
@@ -150,13 +168,14 @@ Resource.prototype._changeState = function(state, callback) {
 var TimestampResourceFactory = function() {
 };
 
-TimestampResourceFactory.prototype.create = function(client) {
-  return new Resource(client, new Date().getTime());
+TimestampResourceFactory.prototype.create = function(client, data) {
+  return new Resource(client, new Date().getTime(), data);
 };
 
 TimestampResourceFactory.prototype.load = function(client, id, reply) {
   res = new Resource(client, id);
   res.setValue(reply);
+  return res;
 }
 
 module.exports = {Handler: JobberTrack, Resource: Resource};

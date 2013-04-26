@@ -111,7 +111,7 @@ describe("Testing start,stop,fail and finish of a resource", function() {
         elt.finish("http://google.com", function(err, reply) {
             assert.ok(!err, err);
             assert.strictEqual(elt.state, "finished");
-            assert.deepEqual(elt.data, "http://google.com");
+            assert.deepEqual(elt.getValue(), {state: "finished", data: {}, result: "http://google.com"});
             done();
         });
       });
@@ -133,6 +133,58 @@ describe("Testing get on a resource", function() {
               done();
           });
         }, 1);
+      });
+    });
+  });
+});
+
+describe("With adding data", function() {
+  var client = redis.createClient("","","");
+  it('simple creation with defaultTimeout', function(done) {
+    var track = new JobberTrack.Handler(client);
+    track.setDefaultTimeout(12);
+    track.create({"foo": "bar"}, function(err, elt) {
+      assert.deepEqual(elt.getValue(), {"state": "waiting", "data": {"foo": "bar"}, "result": {}});
+      done();
+    });
+  });
+
+  it('simple creation without defaultTimeout', function(done) {
+    var track = new JobberTrack.Handler(client);
+    track.create(1200, {"foo": "bar"}, function(err, elt) {
+      assert.deepEqual(elt.getValue(), {"state": "waiting", "data": {"foo": "bar"}, "result": {}});
+      done();
+    });
+  });
+
+  it('creation and then get', function(done) {
+    var track = new JobberTrack.Handler(client);
+    track.setDefaultTimeout(12);
+    track.create({"foo": "bar"}, function(err, elt) {
+      track.get(elt.id, function(err, res) {
+        assert.deepEqual(res.getValue(), {"state": "waiting", "data": {"foo": "bar"}, "result": {}});
+        done();
+      });
+    });
+  });
+
+  it('starting and then stopping with more data', function(done) {
+    var track = new JobberTrack.Handler(client);
+    track.setDefaultTimeout(12);
+    track.create({"foo": "bar"}, function(err, elt) {
+      elt.start(function(err, reply) {
+        track.get(elt.id, function(err, res) {
+          assert.deepEqual(res.getValue(), {"state": "running", "data": {"foo": "bar"}, "result": {}});
+          res.finish({site: "http://google.com"}, function(err, reply) {
+              assert.ok(!err, err);
+              assert.strictEqual(res.state, "finished");
+              assert.deepEqual(res.getValue(), {"state": "finished",
+                                                "data": {"foo": "bar"},
+                                                "result": {"site": "http://google.com"}
+                              });
+              done();
+          });
+        });
       });
     });
   });
