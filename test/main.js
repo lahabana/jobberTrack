@@ -189,3 +189,57 @@ describe("With adding data", function() {
     });
   });
 });
+
+describe('Queue', function() {
+  var client = redis.createClient("","","");
+  it('should block as the queue is empty', function(done) {
+    var queue = new JobberTrack.Queue(client, "queue");
+    client.exists("queue", function(err, reply) {
+        assert.strictEqual(reply, 0);
+        var returned = false;
+        queue.popAndStart(3, function(err, res) {
+          returned = true;
+        });
+        console.log("checking it's blocking");
+        setTimeout(function(){
+          assert.ok(!returned);
+          done();
+        }, 100);
+    });
+  });
+
+  it('should add a job to both the queue and the repo', function(done) {
+    var queue = new JobberTrack.Queue(client, "queue2");
+    queue.createAndPush(3000, {}, function(err, res) {
+      queue.handler.get(res.id, function(err, res2) {
+        assert.deepEqual(res.getValue(), res2.getValue());
+        client.lindex("queue2", 0, function(err, reply) {
+          assert.strictEqual(res.id, reply);
+          done();
+        });
+      });
+    });
+  });
+
+  it('should change status when we take it out of the queue', function(done) {
+    var queue = new JobberTrack.Queue(client, "queue3");
+    var id = false;
+    queue.popAndStart(function(err, res) {
+      assert.ok(!err);
+      assert.strictEqual(res.id, id);
+      client.llen("queue3", function(err, reply) {
+        assert.strictEqual(reply, 0);
+        queue.handler.get(res.id, function(err, res2) {
+          assert.strictEqual(res.getValue().state, "running");
+        });
+        done();
+      });
+      assert.strictEqual(res.getValue().state, "running");
+
+    });
+
+    queue.createAndPush(3000, {}, function(err, res) {
+        id = res.id;
+    });
+  });
+});

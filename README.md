@@ -82,6 +82,19 @@ Create your own resource factory if you want to change the way ids are created.
 
 `load(client, id, reply)` Loads the object from an already existing key-value in the redis store
 
+### JobberTrack.Queue
+
+A queue enables to queue waiting jobs in a redis list and to pop and start them. I hides inside a Handler
+
+`new JobberTrack.Queue(client, id, ResourceFactory)` creates a new queue with the key `id` and its associated Handler using ResourceFactory.
+
+`createAndPush(timeout, data, callback)` creates a new resource add it to resource and then push it to the waiting queue. The parameters are similar to `Handler.create()`.
+
+`popAndStart(callback)` pops the first element from the waiting queue and starts the associated resource. `callback(err, resource)` where resource is the popped associated resource. `popAndStart()` is a blocking method it will block until it can get an element from the queue (uses redis' BRPOP).
+
+## TODO
+
+- minimize the number of access to REDIS (either multi or another solution).
 
 ## MIT License
 Copyright (c) 2013 Charly Molter

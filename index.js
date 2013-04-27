@@ -85,6 +85,10 @@ JobberTrack.prototype.get = function(id, callback) {
     if (err) {
       callback(err);
     }
+    if (reply === null) {
+      callback(false, null);
+      return;
+    }
     var res = that.resourceFactory.load(that.client, id, reply);
     callback(false, res);
   });
@@ -192,4 +196,71 @@ TimestampResourceFactory.prototype.load = function(client, id, reply) {
   return res;
 };
 
-module.exports = {Handler: JobberTrack, Resource: Resource};
+/**
+ * Create a new queue of waiting jobs identified by "id" on the client
+ * and create an associated JobberTrack
+ */
+var Queue = function(client, id, resourceFactory) {
+  this.client = client;
+  this.id = id;
+  this.handler = new JobberTrack(client, resourceFactory);
+};
+
+/**
+ * Creates a new element and push it in the queue of waiting jobs
+ */
+Queue.prototype.createAndPush = function(timeout, data, callback) {
+  var that = this;
+  if (!this.handler) {
+    throw new Error("internal error, no handler is defined for this JobberTrack");
+  }
+  this.handler.create(timeout, data, function(err, res) {
+    if (err) {
+      callback(err);
+      return;
+    }
+    that.client.lpush(that.id, res.id, function(err, reply) {
+      if (err || reply === 0) {
+        callback(err);
+        return;
+      }
+      callback(false, res);
+    });
+  });
+};
+
+/**
+ * Pops a job checks it is still alive (hasn't timeout if
+ * this is the case it just forgets the element and gets to the next one)
+ * and start the job.
+ * This is a blocking function it will block until there
+ * is an element in the queue.
+ */
+Queue.prototype.popAndStart = function(callback) {
+  var that = this;
+  this.client.brpop(this.id, 0, function(err, reply) {
+    if (err || reply === null) {
+      callback(err);
+      return;
+    }
+
+    that.handler.get(reply[1], function(err, resource) {
+      if (resource === null) {
+        that.popAndStart(resource, callback);
+        return;
+      }
+      resource.start(function(err, reply) {
+        if (err) {
+          callback(err);
+          return;
+        }
+        if (reply === "OK") {
+          callback(false, resource);
+          return;
+        }
+      });
+    });
+  });
+};
+
+module.exports = {Handler: JobberTrack, Resource: Resource, Queue: Queue};
