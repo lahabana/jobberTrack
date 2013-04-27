@@ -63,7 +63,7 @@ JobberTrack.prototype.create = function(timeout, data, callback) {
     throw new Error("Invalid arguments");
   }
   var res = that.resourceFactory.create(that.client, data);
-  that.client.set(res.id, res.getValue(), function(err, reply) {
+  that.client.set(res.id, res.serialize(), function(err, reply) {
     if (err) {
       callback("couldn't set the object");
     }
@@ -110,6 +110,20 @@ Resource.prototype.getValue = function() {
   res.result = this.result;
   return res;
 };
+
+/**
+ * Returns the object stringified to put in redis
+ */
+Resource.prototype.serialize = function() {
+  return JSON.stringify(this.getValue());
+}
+
+/*
+ * Load the data returned by redis into an object
+ */
+Resource.prototype.unserialize = function(data) {
+  this.setValue(JSON.parse(data));
+}
 
 /**
  * Set the content from the result of redis query
@@ -159,7 +173,7 @@ Resource.prototype.finish = function(data, callback) {
  */
 Resource.prototype._changeState = function(state, callback) {
   this.state = state;
-  this.client.set(this.id, this.getValue(), callback);
+  this.client.set(this.id, this.serialize(), callback);
 };
 
 /**
@@ -174,8 +188,8 @@ TimestampResourceFactory.prototype.create = function(client, data) {
 
 TimestampResourceFactory.prototype.load = function(client, id, reply) {
   res = new Resource(client, id);
-  res.setValue(reply);
+  res.unserialize(reply);
   return res;
-}
+};
 
 module.exports = {Handler: JobberTrack, Resource: Resource};
