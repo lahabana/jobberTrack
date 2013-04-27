@@ -1,6 +1,6 @@
 {
   "name": "jobber-track",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "A simple way to create and see the status of jobs",
   "main": "index.js",
   "scripts": {
