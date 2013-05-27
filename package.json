@@ -4,7 +4,7 @@
   "description": "A simple way to create and see the status of jobs",
   "main": "index.js",
   "scripts": {
-    "test": "mocha test/* --timeout 3000"
+    "test": "mocha test/* --reporter Spec"
   },
   "repository": {
     "type": "git",
@@ -19,7 +19,6 @@
     "redis": ">=0.8.3"
   },
   "devDependencies": {
-    "redis-mock": "git://github.com/lahabana/redis-mock.git#3d0512c",
     "mocha": ">=1.9.0"
   },
   "author": "lahabana (Charly Molter)",
