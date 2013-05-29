@@ -157,7 +157,45 @@ describe("Checking Tracker methods", function() {
                 assert.strictEqual(reply, "running");
                 done();
               });
-            })
+            });
+          });
+        });
+      });
+    });
+  });
+
+  it('should pop the first element in the queue finish it and call the callback', function(done) {
+    client.set(testKey + ":1:state", "waiting", function(err, reply) {
+      client.set(testKey + ":1:data", JSON.stringify({"foo": "bar"}), function(err, reply) {
+        client.lpush(testKey + ":queue", 1, function(err, reply) {
+          tracker.popAndStart(function(err, resource) {
+            resource.finish({"foo": "bar"}, function(err, res) {
+              assert.strictEqual(resource, res);
+              client.mget(testKey + ":1:state", testKey + ":1:result", function(err, reply) {
+                assert.strictEqual(reply[0], "finished");
+                assert.strictEqual(reply[1], JSON.stringify({"foo": "bar"}));
+                done();
+              })
+            });
+          });
+        });
+      });
+    });
+  });
+
+  it('should pop the first element in the queue fail it and call the callback', function(done) {
+    client.set(testKey + ":1:state", "waiting", function(err, reply) {
+      client.set(testKey + ":1:data", JSON.stringify({"foo": "bar"}), function(err, reply) {
+        client.lpush(testKey + ":queue", 1, function(err, reply) {
+          tracker.popAndStart(function(err, resource) {
+            resource.fail({"foo": "bar"}, function(err, res) {
+              assert.strictEqual(resource, res);
+              client.mget(testKey + ":1:state", testKey + ":1:result", function(err, reply) {
+                assert.strictEqual(reply[0], "failed");
+                assert.strictEqual(reply[1], JSON.stringify({"foo": "bar"}));
+                done();
+              })
+            });
           });
         });
       });
