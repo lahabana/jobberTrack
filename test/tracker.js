@@ -115,6 +115,13 @@ describe("Checking Tracker methods", function() {
     });
   });
 
+  it('should return null when the element doesn\'t exist', function(done) {
+    tracker.get(99999, function(err, resource) {
+      assert.strictEqual(resource, null);
+      done();
+    });
+  });
+
   it('should change the state to the value we want', function(done) {
     client.set(testKey + ":1:state", "running", function(err, reply) {
       client.set(testKey + ":1:data", JSON.stringify({"foo": "bar"}), function(err, reply) {
