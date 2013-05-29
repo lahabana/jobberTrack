@@ -66,17 +66,14 @@ describe("Checking Tracker methods", function() {
   it('should create and push the right data', function(done) {
     tracker.createAndPush({"foo": "bar"}, function(err, id) {
       assert.strictEqual(typeof(id), "number");
-      client.get(testKey + ":nb", function(err, reply){
-        assert.strictEqual(reply, "1");
-        client.get(testKey + ":" + id + ":data", function(err, reply) {
-          assert.strictEqual(reply, JSON.stringify({"foo": "bar"}));
-          client.get(testKey + ":" + id + ":state", function(err, reply) {
-            assert.strictEqual(reply, "waiting");
-            client.lpop(testKey + ":queue", function(err, reply) {
-              assert.equal(reply, id);
-              done();
-            });
-          });
+      client.mget(testKey + ":nb", testKey + ":" + id + ":data", testKey + ":" + id + ":state",
+                  function(err, reply){
+        assert.strictEqual(reply[0], "1");
+        assert.strictEqual(reply[1], JSON.stringify({"foo": "bar"}));
+        assert.strictEqual(reply[2], "waiting");
+        client.lpop(testKey + ":queue", function(err, reply) {
+          assert.equal(reply, id);
+          done();
         });
       });
     });
@@ -130,15 +127,12 @@ describe("Checking Tracker methods", function() {
                                             state: "finished"});
         tracker._changeState(res, function(err, resource) {
           assert.strictEqual(res, resource);
-          client.get(testKey + ":1:state", function(err, reply) {
-            assert.strictEqual(reply, resource.state);
-            client.get(testKey + ":1:result", function(err, reply) {
-              assert.strictEqual(reply, JSON.stringify(resource.result));
-              client.get(testKey + ":1:data", function(err, reply) {
-                assert.strictEqual(reply, JSON.stringify(resource.data));
-                done();
-              });
-            });
+          client.mget(testKey + ":1:state", testKey + ":1:result", testKey + ":1:data",
+              function(err, reply) {
+            assert.strictEqual(reply[0], resource.state);
+            assert.strictEqual(reply[1], JSON.stringify(resource.result));
+            assert.strictEqual(reply[2], JSON.stringify(resource.data));
+            done();
           });
         });
       });
