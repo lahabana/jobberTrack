@@ -45,6 +45,15 @@ describe('Checking Resource', function() {
     assert.strictEqual(res.id, 5);
   });
 
+  it('serialize()', function() {
+    var res = new Resource({id: 5, result: "bar2", data: {foo: "bar"}, state: "finished"});
+    var jobj = res.serialize();
+    assert.deepEqual(jobj.data, {foo: "bar"});
+    assert.strictEqual(jobj.result, "bar2");
+    assert.strictEqual(jobj.state, "finished");
+    assert.strictEqual(jobj.id, 5);
+  })
+
   it('should emit the event changedState when starting', function(done) {
     var res = new Resource({data: "bim"});
     var noop = function() {
